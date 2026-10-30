@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News History</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f4ff;
+            margin: 0;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #263b80;
+        }
+
+        .history-card {
+            background: white;
+            padding: 22px;
+            margin: 20px auto;
+            max-width: 900px;
+            border-left: 6px solid #4169e1;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+            overflow-wrap: anywhere;
+        }
+
+        .history-card p {
+            line-height: 1.6;
+        }
+
+        .buttons {
+            text-align: center;
+            margin-top: 25px;
+        }
+
+        button, .home-link {
+            display: inline-block;
+            padding: 12px 25px;
+            margin: 8px;
+            border: none;
+            border-radius: 8px;
+            background: #4169e1;
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .empty {
+            text-align: center;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>📰 News History</h1>
+
+    {% if history %}
+
+        {% for item in history %}
+
+            <div class="history-card">
+
+                <p><strong>News:</strong> {{ item['news'] }}</p>
+
+                <p><strong>Prediction:</strong>
+                    {{ item['prediction'] }}
+                </p>
+
+                <p><strong>Confidence:</strong>
+                    {{ item['confidence'] }}%
+                </p>
+
+                <p><strong>Date:</strong>
+                    {{ item['time'] }}
+                </p>
+
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <p class="empty">No news history available yet.</p>
+
+    {% endif %}
+
+    <div class="buttons">
+
+        <form action="/clear_history" method="POST">
+            <button type="submit">Clear History</button>
+        </form>
+
+        <a href="/" class="home-link">Back to Home</a>
+
+    </div>
+
+</body>
+</html>

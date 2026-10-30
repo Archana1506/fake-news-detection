@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fake News Detection</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; padding: 20px 12px; font-family: Arial, sans-serif;
+       background: linear-gradient(135deg, #dbeafe, #ede9fe, #fce7f3); color: #1e293b; }
+.navbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
+          gap: 12px; max-width: 1100px; margin: 0 auto 20px; padding: 16px 24px;
+          background: linear-gradient(135deg, #4338ca, #7c3aed); color: white; border-radius: 16px; }
+.nav-logo { font-size: 20px; font-weight: bold; }
+.nav-links a { color: white; text-decoration: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; }
+.nav-links a:hover { background: rgba(255,255,255,.2); }
+.container { max-width: 1100px; margin: 0 auto; padding: 28px; background: rgba(255,255,255,.96);
+             border-radius: 24px; box-shadow: 0 12px 35px rgba(59,70,130,.15); }
+h1 { text-align: center; color: #4338ca; margin: 0 0 8px; }
+h2, h3 { color: #3730a3; }
+.subtitle { text-align: center; color: #64748b; margin-bottom: 24px; }
+.stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
+.stat { flex: 1; min-width: 130px; padding: 16px; border-radius: 14px; text-align: center; }
+.stat h3, .stat h2 { margin: 6px 0; }
+label { display: block; font-weight: bold; margin-bottom: 8px; }
+input[type=text], textarea { width: 100%; padding: 14px; border: 2px solid #c7d2fe; border-radius: 12px;
+                             font-size: 16px; background: #f8faff; margin-bottom: 16px; }
+textarea { min-height: 200px; resize: vertical; }
+input:focus, textarea:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 4px #e0e7ff; }
+button { padding: 13px 22px; border: none; border-radius: 10px; color: white; font-size: 16px;
+         font-weight: bold; cursor: pointer; background: linear-gradient(135deg, #4f46e5, #7c3aed); }
+button:hover { opacity: .9; }
+.btn-full { width: 100%; }
+.btn-red { background: #dc2626; }
+.result { margin: 22px 0; padding: 18px; border-radius: 14px; text-align: center; overflow-wrap: anywhere; }
+.result h2 { margin: 0 0 6px; }
+.result.fake { background: #fee2e2; color: #991b1b; border-left: 6px solid #dc2626; }
+.result.real { background: #dcfce7; color: #166534; border-left: 6px solid #16a34a; }
+.result.neutral { background: #dbeafe; color: #1e40af; border-left: 6px solid #2563eb; }
+.history-card { background: #fff; border: 1px solid #d6e2ff; border-left: 5px solid #4169e1;
+                border-radius: 10px; padding: 14px; margin-bottom: 12px; overflow-wrap: anywhere; }
+.history-card p { margin: 6px 0; line-height: 1.5; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+.actions form { flex: 1; min-width: 160px; }
+.actions button { width: 100%; }
+.chart-box { margin-top: 28px; padding: 20px; background: #f8fafc; border-radius: 15px; text-align: center; }
+.disclaimer { margin-top: 24px; padding: 15px; border-left: 5px solid #f59e0b; background: #fffbeb;
+              color: #92400e; border-radius: 6px; font-size: 14px; line-height: 1.6; }
+footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 13px; }
+@media (max-width: 600px) {
+  .container { padding: 18px; }
+  .navbar { flex-direction: column; align-items: flex-start; }
+  h1 { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-logo">🔎 Fake News Detection</div>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="#analyzer">Analyze News</a>
+    <a href="#recent">History</a>
+    <a href="#chart">Chart</a>
+  </div>
+</nav>
+
+<div class="container">
+  <h1>🔎 Fake News Detection</h1>
+  <p class="subtitle">Machine Learning Based News Credibility Analysis</p>
+
+  <div class="stats">
+    <div class="stat" style="background:#e0e7ff;"><h3>Total Analyses</h3><h2>{{ total_count|default(0) }}</h2></div>
+    <div class="stat" style="background:#fee2e2;"><h3>FAKE Predictions</h3><h2>{{ fake_count|default(0) }}</h2></div>
+    <div class="stat" style="background:#dcfce7;"><h3>REAL Predictions</h3><h2>{{ real_count|default(0) }}</h2></div>
+  </div>
+
+  <div id="analyzer">
+    <form action="/" method="POST">
+      <label for="title">Enter News Title:</label>
+      <input type="text" id="title" name="title" placeholder="Enter news title here...">
+
+      <label for="news">Enter News Article:</label>
+      <textarea id="news" name="news" placeholder="Paste your full news article here..." required></textarea>
+
+      <button type="submit" class="btn-full">Analyze News</button>
+    </form>
+  </div>
+
+  {% if prediction %}
+    {% if 'fake news' in prediction|lower %}
+      {% set box = 'fake' %}{% set icon = '⚠️' %}
+    {% elif 'real news' in prediction|lower %}
+      {% set box = 'real' %}{% set icon = '✅' %}
+    {% else %}
+      {% set box = 'neutral' %}{% set icon = '' %}
+    {% endif %}
+    <div class="result {{ box }}">
+      <h2>{{ icon }} {{ prediction }}</h2>
+      {% if confidence is not none %}<p>Confidence: {{ confidence }}%</p>{% endif %}
+    </div>
+  {% endif %}
+
+  <div id="recent" style="margin-top: 28px;">
+    <h2>📋 Recent Analysis History</h2>
+
+    {% if history %}
+      {% for item in history[:10] %}
+        <div class="history-card">
+          <p><strong>News:</strong> {{ item.news }}</p>
+          <p><strong>Prediction:</strong> {{ item.prediction or item.label }}</p>
+          {% if item.confidence is not none %}
+            <p><strong>Confidence:</strong> {{ item.confidence }}%</p>
+          {% endif %}
+          <p><strong>Date:</strong> {{ item.time or item.created_at }}</p>
+        </div>
+      {% endfor %}
+
+      <div class="actions">
+        <form action="/clear_history" method="POST">
+          <button type="submit" class="btn-red"
+                  onclick="return confirm('Clear all recent analysis history?')">Clear History</button>
+        </form>
+        <form action="/download" method="POST">
+          <button type="submit">Download Report</button>
+        </form>
+      </div>
+    {% else %}
+      <p>Your previous news checks will appear here.</p>
+    {% endif %}
+  </div>
+
+  <div id="chart" class="chart-box">
+    <h2>📊 News Prediction Chart</h2>
+    <p style="color:#64748b;">Fake vs. real predictions</p>
+    {% if total_count|default(0) > 0 %}
+      <div style="max-width: 350px; margin: 0 auto;">
+        <canvas id="newsChart"
+        data-fake="{{ fake_count|default(0) }}"
+        data-real="{{ real_count|default(0) }}"></canvas>
+      </div>
+    {% else %}
+      <p>Analyse some news to display the chart.</p>
+    {% endif %}
+  </div>
+
+  <div class="disclaimer">
+    <strong>⚠️ Disclaimer:</strong>
+    This website uses a machine-learning model trained on a particular dataset to classify
+    news text. Its predictions may be incorrect or biased. A "REAL NEWS" result does not
+    confirm that an article is true, and a "FAKE NEWS" result does not prove that it is false.
+    Always verify news using reliable sources and independent fact-checking.
+  </div>
+
+  <footer>Student Project | Fake News Identification and News Credibility Analysis</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% if total_count|default(0) > 0 %}
+<script>
+  const chartCanvas = document.getElementById("newsChart");
+  if (chartCanvas) {
+    new Chart(chartCanvas, {
+      type: "pie",
+      data: {
+        labels: ["FAKE NEWS", "REAL NEWS"],
+        datasets: [{
+          data: [Number(chartCanvas.dataset.fake), Number(chartCanvas.dataset.real)],
+          backgroundColor: ["#ef4444", "#22c55e"],
+          borderColor: ["#ffffff", "#ffffff"],
+          borderWidth: 3
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { position: "bottom" } } }
+    });
+  }
+</script>
+{% endif %}
+</body>
+</html>
